@@ -1,0 +1,61 @@
+new_products = []
+
+# checks how many products were added since the last "most_recent" until the newest
+
+#TODO if doesnt exist, just show the newest
+    for index, element in enumerate(ul_element):
+        if element['data-product-quickshop-url'] == most_recent:
+            #new_product_count = index
+            break
+        new_products.append(element)
+
+# find the most_recent through the HTML <li> inside the <ul>
+    if ul_element:
+        li_element = ul_element.find('li')
+        if li_element:
+            if new_products:
+                res = new_products[::-1]  # reversing using list slicing
+                for product_li in res:
+
+                    product_item = product_li['data-product-quickshop-url']
+                    image = product_li.find('img', 'productitem--image-primary')
+                    productID = product_item.split('/')[4]
+
+                    img_src = ''
+
+                    grade = productID[-3:]
+
+                    pre_img_src = image.get('src')
+                    if pre_img_src[0] == "/":
+                        img_src = pre_img_src[2:]
+                    else:
+                        img_src = pre_img_src
+
+                    if (grade == "223"):
+                        emoji = "\U0001F7E2"
+                        condition = "Like new"
+                    if (grade == "224"):
+                        emoji = "\U0001F7E1"
+                        condition = "Very good"
+                    if (grade == "225"):
+                        emoji = "\U0001F7E0"
+                        condition = "Good"
+
+                    blue_circle = "\U0001F535"
+                    white_circle = "\u26AA"
+                    product_price = product_li.find("span", {"class", "money"}).text
+                    product_name = product_li.find("h2", {"class", "productitem--title"}).text
+                    title = f'{blue_circle}{white_circle} Talkpoint {white_circle}{blue_circle}\n'
+                    message = f'{title}{product_name}\nPrice: {product_price}\nCondition: {condition} {emoji}\nhttps://talk-point.de/products/' + productID
+                    if(img_src != ''):
+                        bot.send_photo(chat_id=channel_id, photo=img_src,caption=message)
+                    else:
+                        bot.send_message(chat_id=channel_id, text=message)
+                    time.sleep(2)
+                set_most_recent(new_products[0]['data-product-quickshop-url'])
+                new_products.clear()
+                res.clear()
+            else:
+                print('no product')
+    else:
+        print('Error: ul_element not found')
