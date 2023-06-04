@@ -1,1 +1,9 @@
+apple
+samsung
 tablet
+consola
+portatil
+ipad
+huawei
+tv
+drone
