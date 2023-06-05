@@ -3,7 +3,7 @@ import re
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome, ChromeOptions
 # pip install -U git+https://github.com/ultrafunkamsterdam/undetected-chromedriver@fix-multiple-instance
-# Bot.send_message' was never awaited, Enable tracemalloc to get the object allocation traceback - pip install python-telegram-bot==13.13
+# Bot.send_message was never awaited, Enable tracemalloc to get the object allocation traceback - pip install python-telegram-bot==13.13
 import json
 import time
 from bs4 import BeautifulSoup
@@ -62,13 +62,13 @@ def load_products():
 def save_products():
     global final_product_dict
 
-    print("saving lists")
-
     with open(DATA_FILE, 'w') as file:
         if final_product_dict:
             json.dump(final_product_dict, file)
+            print("saved to file")
         else:
             file.write('')
+
 
 
 def compareLists():
@@ -76,19 +76,21 @@ def compareLists():
 
     print("comparing lists")
 
-    for query, old_query_products in old_product_list.items():
-        new_query_products = new_product_list.get(query, {})
-        added_query_products = added_product_list.get(query, {})
+    merged_product_dict = {}
 
-        for product_id in list(old_query_products.keys()):
-            if product_id not in new_query_products:
-                del old_query_products[product_id]
+    # Merge old_product_list and added_product_list
+    merged_product_dict.update(old_product_list)
+    merged_product_dict.update(added_product_list)
 
-        old_query_products.update(added_query_products)
-        final_product_dict[query] = old_query_products
+    # Remove products from merged_product_dict that are not in new_product_list
+    for product_id in list(merged_product_dict.keys()):
+        if product_id not in new_product_list:
+            del merged_product_dict[product_id]
+
+    final_product_dict = merged_product_dict
 
     return final_product_dict
-    # Now, final_product_list contains the merged list with the desired criteria
+    # Now, final_product_dict contains the merged list with the desired structure
 
 
 def runWebDriver(link):
@@ -110,7 +112,7 @@ def runWebDriver(link):
     return soup
 
 
-def getData(query, soup, bot):
+def getData(soup, bot):
 
     # <ul data-v-04484ba1="" class="listing-content__list listing-content__list--grid"> i want to get this element with soup
     product_group = soup.select_one('.listing-content__list')
@@ -141,13 +143,13 @@ def getData(query, soup, bot):
             if grade_string is not None:
                 grade = grade_string.group(1)
 
-            if grade == "A+":
+            if grade == "Grade A+":
                 emoji = "\U0001F535"
-            elif grade == "A":
+            elif grade == "Grade A":
                 emoji = "\U0001F7E2"
-            elif grade == "B":
+            elif grade == "Grade B":
                 emoji = "\U0001F7E1"
-            elif grade == "C":
+            elif grade == "Grade C":
                 emoji = "\U0001F7E0"
             else:
                 grade = "Outro"
@@ -165,25 +167,24 @@ def getData(query, soup, bot):
                 'name': product_name,
                 'price': product_price,
                 'link': product_link,
-                'query': query,
                 'grade': grade
             }
 
             # Check if already exists in the existing list
-            if product_id not in old_product_list[query]:
+            if product_id not in old_product_list and product_id not in added_product_list:
                 print('new product -> ' + product_name)
-                added_product_list[query][product_id] = product_info
+                added_product_list[product_id] = product_info
 
                 # Send message to telegram
                 title = f'{red_circle}{white_circle} Worten {white_circle}{red_circle}\n'
-                message = f'{title}{product_name}\nPrice: {product_price}\nCondition: Grade {grade} {emoji}\n{product_link}'
+                message = f'{title}{product_name}\nPrice: {product_price}\nCondition: {grade} {emoji}\n{product_link}'
                 if (img_src != ''):
                     bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
                 else:
                     bot.send_message(chat_id=channel_id, text=message)
 
 
-            new_product_list[query][product_id] = product_info
+            new_product_list[product_id] = product_info
 
         return("NEXT_PAGE")
     else:
@@ -201,7 +202,7 @@ def getData(query, soup, bot):
 bot = telegram.Bot(token=TOKEN)
 
 # Send a start-up message to the Chat
-bot.send_message(chat_id=channel_id, text='Now getting updates from Worten')
+bot.send_message(chat_id=channel_id, text='Now getting updates from Worten every hour')
 
 load_queries()
 load_products()
@@ -215,10 +216,7 @@ while True:
         while True:
             print(f'fetching all "{query}" - page {page}')
             soup = runWebDriver(f'https://www.worten.pt/search?query=outlet%20{query}&sort_by=price&order_by=asc&facetFilters=seller_id%3A689dda97-efa4-4c6d-96bc-6f4bbfda8394&facetFilters=t_tags%3Ais_in_stock&page={page}')
-            old_product_list.setdefault(query, {})
-            new_product_list.setdefault(query, {})
-            added_product_list.setdefault(query, {})
-            result = getData(query, soup, bot)  # Call getData function for each page
+            result = getData(soup, bot)  # Call getData function for each page
             if result == "EMPTY_PAGE":
                 print("moving to the next item")
                 break  # Exit the loop if an empty page is encountered
