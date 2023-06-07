@@ -177,7 +177,7 @@ def getData(soup, bot):
 
                 # Send message to telegram
                 title = f'{red_circle}{white_circle} Worten {white_circle}{red_circle}\n'
-                message = f'{title}{product_name}\nPrice: {product_price}\nCondition: {grade} {emoji}\n{product_link}'
+                message = f'{title}{product_name}\nPrice: {product_price} €\nCondition: {grade} {emoji}\n{product_link}'
                 if (img_src != ''):
                     bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
                 else:
