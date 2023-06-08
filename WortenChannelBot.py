@@ -230,4 +230,4 @@ while True:
                 page += 1  # Move to the next page
     compareLists()
     save_products()
-    time.sleep(3600)
+    time.sleep(1800)
