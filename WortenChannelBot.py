@@ -1,7 +1,6 @@
 import re
 
-from selenium.webdriver.common.by import By
-from undetected_chromedriver import Chrome, ChromeOptions
+from selenium import webdriver
 # pip install -U git+https://github.com/ultrafunkamsterdam/undetected-chromedriver@fix-multiple-instance
 # Bot.send_message was never awaited, Enable tracemalloc to get the object allocation traceback - pip install python-telegram-bot==13.13
 import json
@@ -199,7 +198,7 @@ bot.send_message(chat_id=channel_id, text='Now getting updates from Worten every
 load_queries()
 load_products()
 
-options = ChromeOptions()
+options = webdriver.ChromeOptions()
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
@@ -210,6 +209,7 @@ while True:
     
     # Start driver
     driver = webdriver.Chrome(options=options)
+
     
     # For all types of product in file queries.txt
     for query in queries:
