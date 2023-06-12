@@ -93,19 +93,11 @@ def compareLists():
     # Now, final_product_dict contains the merged list with the desired structure
 
 
-def runWebDriver(link):
-    options = ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = Chrome(options=options)
+def runWebDriver(driver, link):
     driver.get(link)
 
     # Retrive source code
     html_content = driver.page_source
-
-    # Close driver
-    driver.quit()
 
     # Parse and return HTML code
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -207,15 +199,25 @@ bot.send_message(chat_id=channel_id, text='Now getting updates from Worten every
 load_queries()
 load_products()
 
+options = ChromeOptions()
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+
+
 # Always running script
 while True:
+    
+    # Start driver
+    driver = Chrome(options=options)
+    
     # For all types of product in file queries.txt
     for query in queries:
         result = ""
         page = 1
         while True:
             print(f'fetching all "{query}" - page {page}')
-            soup = runWebDriver(f'https://www.worten.pt/search?query=outlet%20{query}&sort_by=price&order_by=asc&facetFilters=seller_id%3A689dda97-efa4-4c6d-96bc-6f4bbfda8394&facetFilters=t_tags%3Ais_in_stock&page={page}')
+            soup = runWebDriver(driver, f'https://www.worten.pt/search?query=outlet%20{query}&sort_by=price&order_by=asc&facetFilters=seller_id%3A689dda97-efa4-4c6d-96bc-6f4bbfda8394&facetFilters=t_tags%3Ais_in_stock&page={page}')
             result = getData(soup, bot)  # Call getData function for each page
             if result == "EMPTY_PAGE":
                 print("moving to the next item")
@@ -230,4 +232,7 @@ while True:
                 page += 1  # Move to the next page
     compareLists()
     save_products()
+    
+    # Close driver
+    driver.quit()
     time.sleep(1800)
