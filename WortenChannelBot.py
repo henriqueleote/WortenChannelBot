@@ -209,7 +209,7 @@ options.add_argument("--disable-dev-shm-usage")
 while True:
     
     # Start driver
-    driver = Chrome(options=options)
+    driver = webdriver.Chrome(options=options)
     
     # For all types of product in file queries.txt
     for query in queries:
