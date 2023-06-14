@@ -176,7 +176,7 @@ def getData(soup, bot):
                     bot.send_message(chat_id=channel_id, text=message)
 
             new_product_list[product_id] = product_info
-            time.sleep(5)
+            time.sleep(2)
         return("NEXT_PAGE")
     else:
 
