@@ -162,7 +162,7 @@ def getData(soup, bot):
                 'grade': grade
             }
 
-            # Check if already exists in the existing list
+            # Check if doesn't exist anywhere
             if product_id not in old_product_list and product_id not in added_product_list:
                 print('new product -> ' + product_name)
                 added_product_list[product_id] = product_info
@@ -172,9 +172,10 @@ def getData(soup, bot):
                 message = f'{title}{product_name}\nPrice: {product_price} €\nCondition: {grade} {emoji}\n{product_link}'
                 if (img_src != ''):
                     bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+                    time.sleep(2)
                 else:
                     bot.send_message(chat_id=channel_id, text=message)
-
+                    time.sleep(2)
 
             new_product_list[product_id] = product_info
 
