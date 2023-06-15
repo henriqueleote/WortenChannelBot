@@ -11,10 +11,10 @@ import telegram
 
 # URL of the website you want to fetch
 PRODUCT_URL = f'https://worten.pt'
-old_product_list = {}
-new_product_list = {}
-added_product_list = {}
-final_product_dict = {}
+old_list = {}
+recent_list = {}
+added_products_list = {}
+final_products_dict = {}
 queries = []
 
 
@@ -46,25 +46,25 @@ def load_queries():
 
 # Load products from the JSON file
 def load_products():
-    global old_product_list
+    global old_list
     try:
         with open(DATA_FILE, 'r') as file:
             data = file.read()
             if data:
-                old_product_list = json.loads(data)
+                old_list = json.loads(data)
             else:
-                old_product_list = {}
+                old_list = {}
     except FileNotFoundError:
-        old_product_list = {}
+        old_list = {}
 
 
 # Save products to the JSON file
 def save_products():
-    global final_product_dict
+    global final_products_dict
 
     with open(DATA_FILE, 'w') as file:
-        if final_product_dict:
-            json.dump(final_product_dict, file)
+        if final_products_dict:
+            json.dump(final_products_dict, file)
             print("saved to file")
         else:
             file.write('')
@@ -72,24 +72,24 @@ def save_products():
 
 
 def compareLists():
-    global old_product_list, new_product_list, added_product_list, final_product_dict
+    global old_list, recent_list, added_products_list, final_products_dict
 
     print("comparing lists")
 
     merged_product_dict = {}
 
     # Merge old_product_list and added_product_list
-    merged_product_dict.update(old_product_list)
-    merged_product_dict.update(added_product_list)
+    merged_product_dict.update(old_list)
+    merged_product_dict.update(added_products_list)
 
     # Remove products from merged_product_dict that are not in new_product_list
     for product_id in list(merged_product_dict.keys()):
-        if product_id not in new_product_list:
+        if product_id not in recent_list:
             del merged_product_dict[product_id]
 
-    final_product_dict = merged_product_dict
+    final_products_dict = merged_product_dict
 
-    return final_product_dict
+    return final_products_dict
     # Now, final_product_dict contains the merged list with the desired structure
 
 
@@ -163,19 +163,21 @@ def getData(soup, bot):
                 'grade': grade
             }
 
-            # Check if doesn't exist anywhere
-            if product_id not in old_product_list and product_id not in added_product_list:
-                print('new product -> ' + product_name)
-                added_product_list[product_id] = product_info
+            lowercase_string = product_name.lower()
+            if "grade" in lowercase_string or "reuse" in lowercase_string or "recondicionado" in lowercase_string or "caixa aberta" in lowercase_string:
+                # Check if doesn't exist anywhere
+                if product_id not in old_list and product_id not in added_products_list:
+                    print('new product -> ' + product_name)
+                    added_products_list[product_id] = product_info
 
-                # Send message to telegram
-                title = f'{red_circle}{white_circle} Worten {white_circle}{red_circle}\n'
-                message = f'{title}{product_name}\nPrice: {product_price} €\nCondition: {grade} {emoji}\n{product_link}'
-                if (img_src != ''):
-                    bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
-                    time.sleep(3)
+                    # Send message to telegram
+                    title = f'{red_circle}{white_circle} Worten {white_circle}{red_circle}\n'
+                    message = f'{title}{product_name}\nPrice: {product_price} €\nCondition: {grade} {emoji}\n{product_link}'
+                    if (img_src != ''):
+                        bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+                        time.sleep(3)
+                recent_list[product_id] = product_info
 
-            new_product_list[product_id] = product_info
         return("NEXT_PAGE")
     else:
 
@@ -201,13 +203,14 @@ options = ChromeOptions()
 options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
 
 # Start driver
-driver = Chrome(options=options)
+#driver = Chrome(options=options)
 
 # Always running script
 while True:
-
+    driver = Chrome(options=options)
     # For all types of product in file queries.txt
     for query in queries:
         result = ""
@@ -229,8 +232,9 @@ while True:
                 page += 1  # Move to the next page
     compareLists()
     save_products()
+    driver.quit()
 
     time.sleep(1800)
 
 # Close driver
-driver.quit()
+#driver.quit()
