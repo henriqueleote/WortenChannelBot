@@ -212,11 +212,10 @@ options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-gpu")
 
 # Start driver
-#driver = Chrome(options=options)
+driver = Chrome(options=options)
 
 # Always running script
 while True:
-    driver = Chrome(options=options)
     # For all types of product in file queries.txt
     for query in queries:
         result = ""
@@ -238,9 +237,8 @@ while True:
                 page += 1  # Move to the next page
     compareLists()
     save_products()
-    driver.quit()
 
     time.sleep(1800)
 
 # Close driver
-#driver.quit()
+driver.quit()
