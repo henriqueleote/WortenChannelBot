@@ -119,6 +119,7 @@ def getData(soup, bot):
             # Find product HTML Elements
             img_src = ""
             grade = ""
+            product_discount = ""
             product_name_span = product_li.findAll('span', {'class': 'produc-card__name__link'})
             product_link_anchor = product_li.findAll('a')
             product_price_euro = product_li.findAll('span', {'class': 'integer'})
@@ -165,18 +166,23 @@ def getData(soup, bot):
 
             lowercase_string = product_name.lower()
             if "grade" in lowercase_string or "reuse" in lowercase_string or "recondicionado" in lowercase_string or "caixa aberta" in lowercase_string:
-                # Check if doesn't exist anywhere
-                if product_id not in old_list and product_id not in added_products_list:
-                    print('new product -> ' + product_name)
-                    added_products_list[product_id] = product_info
+                product_discount_span = product_li.findAll('span', {'class': 'bold'})
+                if (product_discount_span):
+                    product_discount = re.sub("[^0-9]", "", product_discount_span[0].text.strip())
 
-                    # Send message to telegram
-                    title = f'{red_circle}{white_circle} Worten {white_circle}{red_circle}\n'
-                    message = f'{title}{product_name}\nPrice: {product_price} €\nCondition: {grade} {emoji}\n{product_link}'
-                    if (img_src != ''):
-                        bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
-                        time.sleep(3)
-                recent_list[product_id] = product_info
+                if product_discount and int(product_discount) >= 50:
+                    # Check if doesn't exist anywhere
+                    if product_id not in old_list and product_id not in added_products_list:
+                        print('new product -> ' + product_name)
+                        added_products_list[product_id] = product_info
+
+                        # Send message to telegram
+                        title = f'{red_circle}{white_circle} Worten {white_circle}{red_circle}\n'
+                        message = f'{title}{product_name}\nPrice: {product_price} €\nCondition: {grade} {emoji}\nDiscount: {product_discount}%\n{product_link}'
+                        if (img_src != ''):
+                            bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+                            time.sleep(3)
+                    recent_list[product_id] = product_info
 
         return("NEXT_PAGE")
     else:
