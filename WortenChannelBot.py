@@ -172,11 +172,9 @@ def getData(soup, bot):
                 message = f'{title}{product_name}\nPrice: {product_price} €\nCondition: {grade} {emoji}\n{product_link}'
                 if (img_src != ''):
                     bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
-                else:
-                    bot.send_message(chat_id=channel_id, text=message)
+                    time.sleep(3)
 
             new_product_list[product_id] = product_info
-            time.sleep(2)
         return("NEXT_PAGE")
     else:
 
