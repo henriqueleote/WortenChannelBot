@@ -7,4 +7,3 @@ ipad
 huawei
 smart tv
 smartphone
-drone
