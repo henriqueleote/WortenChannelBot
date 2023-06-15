@@ -132,8 +132,9 @@ def getData(soup, bot):
             product_price = f'{product_price_euro[0].text},{product_price_cent[0].text}'
             grade_string = re.search(gradePattern, product_name)
             img_src = img_element[0].get("src")
+
             if grade_string is not None:
-                grade = grade_string.group(1)
+                grade = grade_string.group(0)
 
             if grade == "Grade A+":
                 emoji = "\U0001F535"
@@ -191,7 +192,7 @@ def getData(soup, bot):
 bot = telegram.Bot(token=TOKEN)
 
 # Send a start-up message to the Chat
-bot.send_message(chat_id=channel_id, text='Now getting updates from Worten every hour')
+#bot.send_message(chat_id=channel_id, text='Now getting updates from Worten every hour')
 
 load_queries()
 load_products()
