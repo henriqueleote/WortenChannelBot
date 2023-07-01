@@ -1,13 +1,11 @@
 import re
-
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome, ChromeOptions
-# pip install -U git+https://github.com/ultrafunkamsterdam/undetected-chromedriver@fix-multiple-instance
-# Bot.send_message was never awaited, Enable tracemalloc to get the object allocation traceback - pip install python-telegram-bot==13.13
 import json
 import time
 from bs4 import BeautifulSoup
 import telegram
+import config
 
 # URL of the website you want to fetch
 PRODUCT_URL = f'https://worten.pt'
@@ -16,16 +14,18 @@ recent_list = {}
 added_products_list = {}
 final_products_dict = {}
 queries = []
+INTERVAL = 1800
+MINIMUM_DISCOUNT = 0
 
 
 # Local storage file
 DATA_FILE = "data.json"
 
 # Telegram Bot Token
-TOKEN = '5849084397:AAGWlLjZIdO3Ize5Myl_gG5k7N3FV0PURmM'
+TOKEN = config.TOKEN
 
 # Telegram Channel ID
-channel_id = "-1001921638321"
+channel_id = config.channel_id
 
 
 # Load queries from a txt file
@@ -170,7 +170,7 @@ def getData(soup, bot):
                 if (product_discount_span):
                     product_discount = re.sub("[^0-9]", "", product_discount_span[0].text.strip())
 
-                if product_discount and int(product_discount) >= 50:
+                if product_discount and int(product_discount) >= MINIMUM_DISCOUNT:
                     # Check if doesn't exist anywhere
                     if product_id not in old_list and product_id not in added_products_list:
                         print('new product -> ' + product_name)
@@ -238,7 +238,7 @@ while True:
     compareLists()
     save_products()
 
-    time.sleep(1800)
+    time.sleep(INTERVAL)
 
 # Close driver
 driver.quit()
