@@ -54,6 +54,11 @@ py WortenChannelBot.py
 
 Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
 
+
+## Autors
+
+- [@henriqueleote](https://www.github.com/henriqueleote)
+
 ## License
 
 [MIT License](LICENSE)
