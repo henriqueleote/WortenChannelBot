@@ -1,4 +1,5 @@
 beautifulsoup4==4.12.2
 python-telegram-bot====13.13
 selenium==4.10.0
-undetected-chromedriver @ git+https://github.com/ultrafunkamsterdam/undetected-chromedriver@c703883f3a2da57f5c3a7c6512bea625952fa4d7
+undetected-chromedriver
+git+https://github.com/ultrafunkamsterdam/undetected-chromedriver@c703883f3a2da57f5c3a7c6512bea625952fa4d7
