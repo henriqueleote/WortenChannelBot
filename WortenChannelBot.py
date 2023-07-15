@@ -175,9 +175,15 @@ def getData(soup, bot):
                         # Send message to telegram
                         title = f'\U0001F534\u26AA Worten \u26AA\U0001F534\n'
                         message = f'{title}{product_name}\nPrice: {product_price}€\nCondition: {emoji} {grade} \nDiscount: {product_discount}%\n{product_link}'
-                        if (img_src != ''):
+
+                        try:
                             bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
-                            time.sleep(3)
+                        except telegram.error.RetryAfter as e:
+                            time.sleep(e.retry_after)  # Wait for the specified duration
+                            # Retry after the waiting period
+                            bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+
+
             recent_list[product_id] = product_info
 
         return("NEXT_PAGE")
