@@ -107,8 +107,6 @@ def getData(soup, bot):
 
     product_count_element = soup.find('p', class_='filter-and-sortblock__product-count')
 
-    print(product_count_element)
-
     if product_count_element is not None:
         product_count_text = product_count_element.get_text(strip=True)
         product_count = re.search(r'\d+', product_count_text).group()
