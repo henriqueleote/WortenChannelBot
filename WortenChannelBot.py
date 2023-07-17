@@ -100,6 +100,12 @@ def runWebDriver(driver, link):
 
     # Parse and return HTML code
     soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+    # Wait until a specific element loads
+    while soup.find('p', class_='filter-and-sortblock__product-count') is None:
+        time.sleep(1)  # Wait for 1 second before checking again
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+
     return soup
 
 
@@ -124,7 +130,8 @@ def getData(soup, bot):
         for product_li in product_list:
 
             product_link_anchor = product_li.findAll('a')
-            product_link = PRODUCT_URL + product_link_anchor[0]['href']
+            product_link_element = product_link_anchor[0]
+            product_link = PRODUCT_URL + product_link_element.get('href', '')
             parts = product_link.split('-')
             product_id = parts[-1]
 
