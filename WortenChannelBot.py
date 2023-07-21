@@ -99,7 +99,7 @@ def runWebDriver(driver, link):
     driver.get(link)
 
     # Parse and return HTML code
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    #soup = BeautifulSoup(driver.page_source, 'html.parser')
 
     # Wait until a specific element loads
     while soup.find('p', class_='filter-and-sortblock__product-count') is None:
