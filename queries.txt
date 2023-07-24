@@ -3,7 +3,6 @@ samsung
 tablet
 consola
 portatil
-ipad
 huawei
 smart tv
 smartphone

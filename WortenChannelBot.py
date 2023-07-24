@@ -1,5 +1,6 @@
 import re
 from selenium.webdriver.common.by import By
+from telegram.error import BadRequest, RetryAfter, TimedOut, Unauthorized, NetworkError
 from undetected_chromedriver import Chrome, ChromeOptions
 import json
 import time
@@ -16,7 +17,7 @@ final_products_dict = {}
 queries = []
 INTERVAL = 1800
 MINIMUM_DISCOUNT = 0
-
+toWait = False
 
 # Local storage file
 DATA_FILE = "data.json"
@@ -96,6 +97,7 @@ def compareLists():
 
 
 def runWebDriver(driver, link):
+    global toWait
     driver.get(link)
 
     # Parse and return HTML code
@@ -106,11 +108,16 @@ def runWebDriver(driver, link):
         #time.sleep(1)  # Wait for 1 second before checking again
         #soup = BeautifulSoup(driver.page_source, "html.parser")
 
+    if toWait:
+        while soup.find('p', class_='filter-and-sortblock__product-count') is None:
+            time.sleep(1)  # Wait for 1 second before checking again
+            soup = BeautifulSoup(driver.page_source, "html.parser")
+
     return soup
 
 
 def getData(soup, bot):
-
+    global toWait
     product_count_element = soup.find('p', class_='filter-and-sortblock__product-count')
 
     if product_count_element is not None:
@@ -185,20 +192,35 @@ def getData(soup, bot):
 
                         try:
                             bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
-                        except telegram.error.RetryAfter as e:
-                            time.sleep(e.retry_after)  # Wait for the specified duration
-                            # Retry after the waiting period
+                        except BadRequest as e:
+                            bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+                        except RetryAfter as e:
+                            time.sleep(e.retry_after)
+                            bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+                        except TimedOut as e:
+                            time.sleep(60)
+                            bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+                        except Unauthorized as e:
+                            time.sleep(0.25)
+                        except NetworkError as e:
+                            time.sleep(30)
+                            bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
+                        except Exception as e:
+                            time.sleep(1)
                             bot.send_photo(chat_id=channel_id, photo=img_src, caption=message)
 
 
             recent_list[product_id] = product_info
 
+
+        toWait = False
         return("NEXT_PAGE")
     else:
 
         p_element = soup.find('p', {'class': 'filter-and-sortblock__product-count'})
 
         if p_element is None:
+            toWait = True
             return "ACCESS_ERROR"
 
         else:
