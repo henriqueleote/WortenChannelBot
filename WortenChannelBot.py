@@ -108,10 +108,10 @@ def runWebDriver(driver, link):
         #time.sleep(1)  # Wait for 1 second before checking again
         #soup = BeautifulSoup(driver.page_source, "html.parser")
 
-    if toWait:
-        while soup.find('p', class_='filter-and-sortblock__product-count') is None:
-            time.sleep(1)  # Wait for 1 second before checking again
-            soup = BeautifulSoup(driver.page_source, "html.parser")
+    #if toWait:
+     #   while soup.find('p', class_='filter-and-sortblock__product-count') is None:
+      #      time.sleep(1)  # Wait for 1 second before checking again
+       #     soup = BeautifulSoup(driver.page_source, "html.parser")
 
     return soup
 
@@ -245,6 +245,8 @@ while True:
     # Start driver
     driver = Chrome(options=options)
 
+    bot.send_message(chat_id=channel_id, message="Running worten bot...", disable_notification=True)
+
     # For all types of product in file queries.txt
     for query in queries:
         result = ""
@@ -266,6 +268,7 @@ while True:
                 page += 1  # Move to the next page
     compareLists()
     save_products()
+    bot.send_message(chat_id=channel_id, message="Worten bot is over...", disable_notification=True)
 
     # Close driver
     driver.quit()
