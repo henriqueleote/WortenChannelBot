@@ -1,5 +1,2 @@
 python-telegram-bot
-selenium
-webdriver-manager
-selenium-stealth
-beautifulsoup4
+requests

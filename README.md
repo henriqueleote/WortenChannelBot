@@ -4,11 +4,8 @@ This script fetches the latest product updates from Worten.pt and sends them to 
 
 ## Requirements
 
-- Beautifulsoup4
 - Python-telegram-bot
-- Selenium
-- Selenium stealth
-- Webdriver manager
+- Requests
 
 ## Installation
 
