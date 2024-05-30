@@ -130,7 +130,7 @@ async def queryWebsite(query):
             productFinalPrice = str(item['winningOffer']['pricing']['final']['value'])
             formatedProductFinalPrice = float(f"{productFinalPrice[:-2]}.{productFinalPrice[-2:]}")
 
-            url = f'https://worten.pt{item['product']['url']}'
+            url = f'https://worten.pt"{item["product"]["url"]}"'
 
             grade_emoji_map = {
                 "A+": f"\U0001F535 Grade",
