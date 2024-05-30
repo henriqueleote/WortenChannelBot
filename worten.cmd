@@ -1,1 +1,1 @@
-py WortenChannelBot.py
+py bot.py
