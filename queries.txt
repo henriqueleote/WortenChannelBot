@@ -1,9 +1,0 @@
-apple
-samsung
-tablet
-consola
-portatil
-huawei
-smart tv
-smartphone
-drone

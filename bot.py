@@ -1,20 +1,18 @@
 import asyncio
-import json
 import time
 import requests
 import telegram
 from telegram.error import BadRequest, RetryAfter, TimedOut, NetworkError
 import worten_config
 
-queries = []
-storage_list = {}
-query_list = {}
+queries = ['apple','samsung','tablet','consola','portatil','huawei','smart tv','smartphone','drone']
+
+list = []
+
+iteration = 0
 
 # bool to control if messages are sent to telegram or not
 sendMessage = True
-
-# Local storage file
-DATA_FILE = "data.json"
 
 # Telegram Channel ID
 channel_id = worten_config.channel_id
@@ -22,46 +20,6 @@ channel_id = worten_config.channel_id
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
 }
-
-# Load queries from a txt file
-def load_queries():
-    global queries
-    try:
-        file = open('queries.txt', 'r')
-        lines = file.readlines()
-        count = 0
-        for line in lines:
-            count += 1
-            queries.append(line.strip())
-
-    except FileNotFoundError:
-        queries = []
-        print('not found')
-
-# Load products from the JSON file
-def load_products():
-    global storage_list
-    try:
-        with open(DATA_FILE, 'r') as file:
-            data = file.read()
-            if data:
-                storage_list = json.loads(data)
-            else:
-                storage_list = {}
-    except FileNotFoundError:
-        storage_list = {}
-
-# Save products to the JSON file
-def save_products():
-    global query_list, storage_list
-
-    with open(DATA_FILE, 'w') as file:
-        if query_list:
-            json.dump(query_list, file)
-            storage_list = query_list
-            print("saved to file")
-        else:
-            file.write('')
 
 async def queryWebsite(query):
     moveToTheNextOne = False
@@ -120,7 +78,6 @@ async def queryWebsite(query):
         hasNextPage = response.json()['data']['searchProducts']['hasNextPage']
 
         for item in data:
-
             productID = item['product']['sku']
             productName = item['product']['name']
             productImage = item['product']['image']['url']
@@ -144,10 +101,10 @@ async def queryWebsite(query):
             title = f'\U0001F534\u26AA Worten \u26AA\U0001F534\n'
             message = f'{title}{productName}\nPrice: {formatedProductFinalPrice}€\nCondition: {emoji} {productGrade} \n{url}'
 
-            query_list[productID] = {'id': productID, 'name': productName}
-
-            if (productID not in storage_list):
-                if (sendMessage):
+            if (productID not in list):
+                list.append(productID)
+                print(f'new product -> {formatedProductFinalPrice}€ | {productName}')
+                if sendMessage and iteration > 0:
                     try:
                         async with bot:
                             await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
@@ -170,8 +127,7 @@ async def queryWebsite(query):
                         time.sleep(1)
                         async with bot:
                             await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-                else:
-                    print(message)
+
         if hasNextPage:
             page += 1
         else:
@@ -180,17 +136,15 @@ async def queryWebsite(query):
 bot = telegram.Bot(token=worten_config.TOKEN)
 
 async def main():
-    load_products()
-    load_queries()
-
+    global iteration
     while True:
         print('Running worten.pt...')
         for query in queries:
             await queryWebsite(query)
-        print('no more products')
-        save_products()
+        print(f'last product -> {list[len(list) - 1]}')
+        await bot.send_message(chat_id=worten_config.status_channel_id, text=f'Last worten product -> {list[len(list) - 1]}', disable_notification=True)
+        iteration += 1
         time.sleep(180)
-
 
 if __name__ == '__main__':
     asyncio.run(main())
