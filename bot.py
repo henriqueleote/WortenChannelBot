@@ -9,6 +9,7 @@ queries = ['apple','samsung','tablet','consola','portatil','huawei','smart tv','
 
 list = []
 
+
 iteration = 0
 
 # bool to control if messages are sent to telegram or not
@@ -142,7 +143,9 @@ async def main():
         for query in queries:
             await queryWebsite(query)
         print(f'last product -> {list[len(list) - 1]}')
-        await bot.send_message(chat_id=worten_config.status_channel_id, text=f'Last worten product -> {list[len(list) - 1]}', disable_notification=True)
+        async with bot:
+            await bot.send_message(chat_id=worten_config.status_channel_id,
+                                   text=f'Last worten product -> {list[len(list) - 1]}', disable_notification=True)
         iteration += 1
         time.sleep(180)
 
