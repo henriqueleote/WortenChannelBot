@@ -83,6 +83,8 @@ async def queryWebsite(query):
             productName = item['product']['name']
             productImage = item['product']['image']['url']
             productGrade = item['product']['textProperties'].get('grade-recon', {})
+            productQuantity = item['totalOffers']
+
             if not productGrade:
                 productGrade = 'Últimas unidades'
             productFinalPrice = str(item['winningOffer']['pricing']['final']['value'])
@@ -100,7 +102,11 @@ async def queryWebsite(query):
             emoji = grade_emoji_map.get(productGrade, "\u26AA")  # White circle emoji
 
             title = f'\U0001F534\u26AA Worten \u26AA\U0001F534\n'
-            message = f'{title}{productName}\nPrice: {formatedProductFinalPrice}€\nCondition: {emoji} {productGrade} \n{url}'
+            message = (f'{title}{productName}\n'
+                       f'Price: {formatedProductFinalPrice}€\n'
+                       f'Condition: {emoji} {productGrade}\n'
+                       f'Quantity: {productQuantity}\n'
+                       f'{url}')
 
             if (productID not in list):
                 list.append(productID)
