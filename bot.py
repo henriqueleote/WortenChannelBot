@@ -75,70 +75,81 @@ async def queryWebsite(query):
         }
 
         response = requests.post('https://www.worten.pt/_/api/graphql', headers=headers, json=json_data)
-        data = response.json()['data']['searchProducts']['hits']
-        hasNextPage = response.json()['data']['searchProducts']['hasNextPage']
+        if response.json():
+            try:
+                data = response.json()['data']['searchProducts']['hits']
+            except KeyError:
+                data = []
+                print('no records')
 
-        for item in data:
-            productID = item['product']['sku']
-            productName = item['product']['name']
-            productImage = item['product']['image']['url']
-            productGrade = item['product']['textProperties'].get('grade-recon', {})
-            productQuantity = item['totalOffers']
+            try:
+                hasNextPage = response.json()['data']['searchProducts']['hasNextPage']
+            except KeyError:
+                hasNextPage = False
+                moveToTheNextOne = False
+                print('no record')
 
-            if not productGrade:
-                productGrade = 'Últimas unidades'
-            productFinalPrice = str(item['winningOffer']['pricing']['final']['value'])
-            formatedProductFinalPrice = float(f"{productFinalPrice[:-2]}.{productFinalPrice[-2:]}")
+            for item in data:
+                productID = item['product']['sku']
+                productName = item['product']['name']
+                productImage = item['product']['image']['url']
+                productGrade = item['product']['textProperties'].get('grade-recon', {})
+                productQuantity = item['totalOffers']
 
-            url = f'https://worten.pt{item["product"]["url"]}'
+                if not productGrade:
+                    productGrade = 'Últimas unidades'
+                productFinalPrice = str(item['winningOffer']['pricing']['final']['value'])
+                formatedProductFinalPrice = float(f"{productFinalPrice[:-2]}.{productFinalPrice[-2:]}")
 
-            grade_emoji_map = {
-                "A+": f"\U0001F535 Grade",
-                "A": f"\U0001F7E2 Grade",
-                "B": f"\U0001F7E1 Grade",
-                "C": f"\U0001F7E0 Grade"
-            }
+                url = f'https://worten.pt{item["product"]["url"]}'
 
-            emoji = grade_emoji_map.get(productGrade, "\u26AA")  # White circle emoji
+                grade_emoji_map = {
+                    "A+": f"\U0001F535 Grade",
+                    "A": f"\U0001F7E2 Grade",
+                    "B": f"\U0001F7E1 Grade",
+                    "C": f"\U0001F7E0 Grade"
+                }
 
-            title = f'\U0001F534\u26AA Worten \u26AA\U0001F534\n'
-            message = (f'{title}{productName}\n'
-                       f'Price: {formatedProductFinalPrice}€\n'
-                       f'Condition: {emoji} {productGrade}\n'
-                       f'Quantity: {productQuantity}\n'
-                       f'{url}')
+                emoji = grade_emoji_map.get(productGrade, "\u26AA")  # White circle emoji
 
-            if (productID not in list):
-                list.append(productID)
-                print(f'new product -> {formatedProductFinalPrice}€ | {productName}')
-                if sendMessage and iteration > 0:
-                    try:
-                        async with bot:
-                            await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-                    except BadRequest as e:
-                        async with bot:
-                            await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-                    except RetryAfter as e:
-                        time.sleep(e.retry_after)
-                        async with bot:
-                            await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-                    except TimedOut as e:
-                        time.sleep(60)
-                        async with bot:
-                            await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-                    except NetworkError as e:
-                        time.sleep(30)
-                        async with bot:
-                            await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-                    except Exception as e:
-                        time.sleep(1)
-                        async with bot:
-                            await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                title = f'\U0001F534\u26AA Worten \u26AA\U0001F534\n'
+                message = (f'{title}{productName}\n'
+                           f'Price: {formatedProductFinalPrice}€\n'
+                           f'Condition: {emoji} {productGrade}\n'
+                           f'Quantity: {productQuantity}\n'
+                           f'{url}')
 
-        if hasNextPage:
-            page += 1
-        else:
-            moveToTheNextOne = True
+                if (productID not in list):
+                    list.append(productID)
+                    print(f'new product -> {formatedProductFinalPrice}€ | {productName}')
+                    if sendMessage and iteration > 0:
+                        try:
+                            async with bot:
+                                await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                        except BadRequest as e:
+                            async with bot:
+                                await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                        except RetryAfter as e:
+                            time.sleep(e.retry_after)
+                            async with bot:
+                                await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                        except TimedOut as e:
+                            time.sleep(60)
+                            async with bot:
+                                await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                        except NetworkError as e:
+                            time.sleep(30)
+                            async with bot:
+                                await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                        except Exception as e:
+                            time.sleep(1)
+                            async with bot:
+                                await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+
+            if hasNextPage:
+                page += 1
+            else:
+                moveToTheNextOne = True
 
 bot = telegram.Bot(token=worten_config.TOKEN)
 
