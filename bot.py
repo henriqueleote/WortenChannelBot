@@ -5,7 +5,8 @@ import telegram
 from telegram.error import BadRequest, RetryAfter, TimedOut, NetworkError
 import worten_config
 
-queries = ['apple','samsung','tablet','consola','portatil','huawei','smart tv','smartphone','drone']
+#queries = ['apple','samsung','tablet','consola','portatil','huawei','smart tv','smartphone','drone']
+queries = ['outlet']
 
 list = []
 
@@ -75,7 +76,7 @@ async def queryWebsite(query):
         }
 
         response = requests.post('https://www.worten.pt/_/api/graphql', headers=headers, json=json_data)
-        if response.json():
+        if response.json() and response.json()['data']['searchProducts']:
             try:
                 data = response.json()['data']['searchProducts']['hits']
             except KeyError:
