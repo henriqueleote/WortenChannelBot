@@ -76,7 +76,7 @@ async def queryWebsite(query):
         }
 
         response = requests.post('https://www.worten.pt/_/api/graphql', headers=headers, json=json_data)
-        if response.json() and response.json()['data']['searchProducts']:
+        if response and response.json() and response.json()['data']['searchProducts']:
             try:
                 data = response.json()['data']['searchProducts']['hits']
             except KeyError:
