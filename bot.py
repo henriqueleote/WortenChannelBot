@@ -76,12 +76,8 @@ async def queryWebsite(query):
         }
 
         response = requests.post('https://www.worten.pt/_/api/graphql', headers=headers, json=json_data)
-        if response and response.json() and response.json()['data']['searchProducts']:
-            try:
-                data = response.json()['data']['searchProducts']['hits']
-            except KeyError:
-                data = []
-                print('no records')
+        if response:
+            data = response.json().get('data',[]).get('searchProducts',[]).get('hits',[])
 
             try:
                 hasNextPage = response.json()['data']['searchProducts']['hasNextPage']
@@ -151,6 +147,7 @@ async def queryWebsite(query):
                 page += 1
             else:
                 moveToTheNextOne = True
+                break
 
 bot = telegram.Bot(token=worten_config.TOKEN)
 
