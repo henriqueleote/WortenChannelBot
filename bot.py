@@ -8,6 +8,8 @@ import worten_config
 # queries = ['apple','samsung','tablet','consola','portatil','huawei','smart tv','smartphone','drone']
 queries = ['outlet']
 
+bannedList = ['toner']
+
 list = []
 
 iteration = 0
@@ -53,7 +55,13 @@ async def handleItem(item):
                f'Quantity: {productQuantity}\n'
                f'{url}')
 
-    if (productID not in list):
+    skip = False
+
+    for word in bannedList:
+        if word in productName.lower():
+            skip = True
+
+    if productID not in list and not skip:
         list.append(productID)
         print(f'new product -> {formatedProductFinalPrice}€ | {productName}')
         if sendMessage and iteration > 0:
