@@ -4,11 +4,12 @@ import requests
 import telegram
 from telegram.error import BadRequest, RetryAfter, TimedOut, NetworkError
 import worten_config
+import datetime
 
-# queries = ['apple','samsung','tablet','consola','portatil','huawei','smart tv','smartphone','drone']
-queries = ['outlet']
+queries = ['iphone', 'macbook', 'apple','samsung','tablet','consola','portatil','huawei','smart+tv','smartphone','drone', 'projetor', 'imac','ipad','tv','placa+inducao','exaustor','powerbank','belkin', 'monitor']
+#queries = ['outlet']
 
-bannedList = ['toner']
+bannedList = ['suporte de tv ', 'toner ', 'triciclo ', 'bebé ', 'berço ', 'cama ', 'carrinho ', 'aquecedor ', 'capa ', 'cabo ', 'case ', 'seguro ', 'película ', 'substituição ', 'tinteiros ', 'protector de ecrã', 'protetor de ecrã']
 
 list = []
 
@@ -61,7 +62,7 @@ async def handleItem(item):
         if word in productName.lower():
             skip = True
 
-    if productID not in list and not skip:
+    if productID not in list and not skip and int(productQuantity) < 5:
         list.append(productID)
         print(f'new product -> {formatedProductFinalPrice}€ | {productName}')
         if sendMessage and iteration > 0:
@@ -140,15 +141,13 @@ async def queryWebsite(query):
             },
         }
         response = requests.post('https://www.worten.pt/_/api/graphql', headers=headers, json=json_data)
-        if response.json():
+        if response.status_code == 200:
             mainSet = response.json().get('data', [])
             if mainSet:
                 searchProducts = mainSet.get('searchProducts', [])
                 if searchProducts:
                     hasNextPage = searchProducts.get('hasNextPage', False)
                     data = searchProducts.get('hits', [])
-                    # print(hasNextPage)
-                    # print(data is not None)
                     if data:
                         for item in data:
                             await handleItem(item)
@@ -156,6 +155,9 @@ async def queryWebsite(query):
                         page += 1
                     else:
                         break
+        else:
+            page = page
+
 
 
 bot = telegram.Bot(token=worten_config.TOKEN)
@@ -164,15 +166,16 @@ bot = telegram.Bot(token=worten_config.TOKEN)
 async def main():
     global iteration
     while True:
-        print('Running worten.pt...')
+        program_starts = time.time()
+        print(f'Running worten.pt... ({datetime.datetime.now()})')
         for query in queries:
             await queryWebsite(query)
-        print(f'last product -> {list[len(list) - 1]}')
+        print(f'last product -> {list[len(list) - 1]} -> {time.time() - program_starts} seconds')
         async with bot:
             await bot.send_message(chat_id=worten_config.status_channel_id,
                                    text=f'Last worten product -> {list[len(list) - 1]}', disable_notification=True)
         iteration += 1
-        time.sleep(180)
+        time.sleep(60)
 
 
 if __name__ == '__main__':
