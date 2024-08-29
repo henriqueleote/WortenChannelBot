@@ -6,8 +6,11 @@ from telegram.error import BadRequest, RetryAfter, TimedOut, NetworkError
 import worten_config
 import datetime
 
-queries = ['iphone', 'macbook', 'apple','samsung','tablet','consola','portatil','huawei','smartphone','drone', 'projetor', 'imac','ipad','tv','exaustor','powerbank','belkin', 'monitor']
-bannedList = ['suport tv ', 'suporte de tv ', 'toner ', 'triciclo ', 'bebé ', 'berço ', 'cama ', 'carrinho ', 'aquecedor ', 'capa ', 'cabo ', 'case ', 'seguro ', 'película ', 'substituição ', 'tinteiros ', 'protector de ecrã', 'protetor de ecrã']
+queries = ['iphone', 'macbook', 'apple', 'samsung', 'tablet', 'consola', 'portatil', 'huawei', 'smartphone', 'drone',
+           'projetor', 'imac', 'ipad', 'tv', 'exaustor', 'powerbank', 'belkin', 'monitor']
+bannedList = ['suport tv ', 'suporte de tv ', 'toner ', 'triciclo ', 'bebé ', 'berço ', 'cama ', 'carrinho ',
+              'aquecedor ', 'capa ', 'cabo ', 'case ', 'seguro ', 'película ', 'substituição ', 'tinteiros ',
+              'protector de ecrã', 'protetor de ecrã']
 
 old_list = []
 new_list = []
@@ -88,7 +91,6 @@ async def handleItem(item):
                 async with bot:
                     await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
 
-    # to replace after
     if productID not in new_list and not skip and int(productQuantity) < 5:
         new_list.append(productID)
 
@@ -161,7 +163,6 @@ async def queryWebsite(query):
             page = page
 
 
-
 bot = telegram.Bot(token=worten_config.TOKEN)
 
 
@@ -175,12 +176,14 @@ async def main():
         print(f'last product -> {old_list[len(old_list) - 1]} -> {time.time() - program_starts} seconds')
         async with bot:
             await bot.send_message(chat_id=worten_config.status_channel_id,
-                                   text=f'Last worten product -> {old_list[len(old_list) - 1]}', disable_notification=True)
+                                   text=f'Last worten product -> {old_list[len(old_list) - 1]}',
+                                   disable_notification=True)
         iteration += 1
-        print(f'number of products: {len(old_list)}')
         old_list = new_list
         new_list = []
+        print(f'number of products: {len(old_list)}')
         time.sleep(15)
+
 
 if __name__ == '__main__':
     asyncio.run(main())
