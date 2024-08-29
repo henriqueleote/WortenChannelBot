@@ -175,7 +175,6 @@ async def main():
             await bot.send_message(chat_id=worten_config.status_channel_id,
                                    text=f'Last worten product -> {list[len(list) - 1]}', disable_notification=True)
         iteration += 1
-        time.sleep(60)
 
 
 if __name__ == '__main__':
