@@ -15,7 +15,7 @@ bannedList = ['suport tv ', 'suporte de tv ', 'toner ', 'triciclo ', 'bebé ', '
 old_list = []
 new_list = []
 
-iteration = 0
+firstIteration = True
 
 # bool to control if messages are sent to telegram or not
 sendMessage = True
@@ -31,32 +31,7 @@ headers = {
 async def handleItem(item):
     productID = item['product']['sku']
     productName = item['product']['name']
-    productImage = item['product']['image']['url']
-    productGrade = item['product']['textProperties'].get('grade-recon', {})
     productQuantity = item['totalOffers']
-
-    if not productGrade:
-        productGrade = 'Últimas unidades'
-    productFinalPrice = str(item['winningOffer']['pricing']['final']['value'])
-    formatedProductFinalPrice = float(f"{productFinalPrice[:-2]}.{productFinalPrice[-2:]}")
-
-    url = f'https://worten.pt{item["product"]["url"]}'
-
-    grade_emoji_map = {
-        "A+": f"\U0001F535 Grade",
-        "A": f"\U0001F7E2 Grade",
-        "B": f"\U0001F7E1 Grade",
-        "C": f"\U0001F7E0 Grade"
-    }
-
-    emoji = grade_emoji_map.get(productGrade, "\u26AA")  # White circle emoji
-
-    title = f'\U0001F534\u26AA Worten \u26AA\U0001F534\n'
-    message = (f'{title}{productName}\n'
-               f'Price: {formatedProductFinalPrice}€\n'
-               f'Condition: {emoji} {productGrade}\n'
-               f'Quantity: {productQuantity}\n'
-               f'{url}')
 
     skip = False
 
@@ -66,8 +41,35 @@ async def handleItem(item):
 
     if productID not in old_list and not skip and int(productQuantity) < 5:
         old_list.append(productID)
-        print(f'new product -> {formatedProductFinalPrice}€ | {productName}')
-        if sendMessage and iteration > 0:
+        if sendMessage and firstIteration is False:
+
+            productImage = item['product']['image']['url']
+            productGrade = item['product']['textProperties'].get('grade-recon', {})
+
+            if not productGrade:
+                productGrade = 'Últimas unidades'
+            productFinalPrice = str(item['winningOffer']['pricing']['final']['value'])
+            formatedProductFinalPrice = float(f"{productFinalPrice[:-2]}.{productFinalPrice[-2:]}")
+
+            url = f'https://worten.pt{item["product"]["url"]}'
+
+            grade_emoji_map = {
+                "A+": f"\U0001F535 Grade",
+                "A": f"\U0001F7E2 Grade",
+                "B": f"\U0001F7E1 Grade",
+                "C": f"\U0001F7E0 Grade"
+            }
+
+            emoji = grade_emoji_map.get(productGrade, "\u26AA")  # White circle emoji
+
+            title = f'\U0001F534\u26AA Worten \u26AA\U0001F534\n'
+            message = (f'{title}{productName}\n'
+                       f'Price: {formatedProductFinalPrice}€\n'
+                       f'Condition: {emoji} {productGrade}\n'
+                       f'Quantity: {productQuantity}\n'
+                       f'{url}')
+
+            print(f'\033[92m{productID} | {formatedProductFinalPrice}€ | {productName}\033[0m')
             try:
                 async with bot:
                     await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
@@ -93,6 +95,7 @@ async def handleItem(item):
 
     if productID not in new_list and not skip and int(productQuantity) < 5:
         new_list.append(productID)
+
 
 async def queryWebsite(query):
     page = 0
@@ -167,7 +170,7 @@ bot = telegram.Bot(token=worten_config.TOKEN)
 
 
 async def main():
-    global iteration, old_list, new_list
+    global firstIteration, old_list, new_list
     while True:
         program_starts = time.time()
         print(f'Running worten.pt... ({datetime.datetime.now()})')
@@ -178,10 +181,17 @@ async def main():
             await bot.send_message(chat_id=worten_config.status_channel_id,
                                    text=f'Last worten product -> {old_list[len(old_list) - 1]}',
                                    disable_notification=True)
-        iteration += 1
+        firstIteration = False
+
+        removed = set(old_list).difference(set(new_list))
+        if len(removed):
+            print(f'\033[91m{removed}\033[0m')
+
+        print(old_list)
+        print(new_list)
+
         old_list = new_list
         new_list = []
-        print(f'number of products: {len(old_list)}')
         time.sleep(15)
 
 
