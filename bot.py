@@ -7,13 +7,12 @@ import worten_config
 import datetime
 
 queries = ['iphone', 'macbook', 'apple', 'samsung', 'tablet', 'consola', 'portatil', 'huawei', 'smartphone', 'drone',
-           'projetor', 'imac', 'ipad', 'tv', 'exaustor', 'powerbank', 'belkin', 'monitor']
+           'projetor', 'imac', 'ipad', 'tv', 'exaustor', 'powerbank', 'belkin', 'monitor', 'sanduicheira', 'sandwicheira']
 bannedList = ['suport tv ', 'suporte de tv ', 'toner ', 'triciclo ', 'bebé ', 'berço ', 'cama ', 'carrinho ',
               'aquecedor ', 'capa ', 'cabo ', 'case ', 'seguro ', 'película ', 'substituição ', 'tinteiros ',
               'protector de ecrã', 'protetor de ecrã']
 
-old_list = []
-new_list = []
+sku_list = {}
 
 firstIteration = True
 
@@ -39,8 +38,9 @@ async def handleItem(item):
         if word in productName.lower():
             skip = True
 
-    if productID not in old_list and not skip and int(productQuantity) < 5:
-        old_list.append(productID)
+    sku_list[productID] = True
+
+    if productID not in sku_list and not skip and int(productQuantity) < 5:
         if sendMessage and firstIteration is False:
 
             productImage = item['product']['image']['url']
@@ -92,9 +92,6 @@ async def handleItem(item):
                 time.sleep(1)
                 async with bot:
                     await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-
-    if productID not in new_list and not skip and int(productQuantity) < 5:
-        new_list.append(productID)
 
 
 async def queryWebsite(query):
@@ -154,6 +151,9 @@ async def queryWebsite(query):
                 searchProducts = mainSet.get('searchProducts', [])
                 if searchProducts:
                     hasNextPage = searchProducts.get('hasNextPage', False)
+                    totalHits = searchProducts.get('totalHits', 0)
+                    if int(totalHits) > 1000:
+                        break
                     data = searchProducts.get('hits', [])
                     if data:
                         for item in data:
@@ -170,30 +170,39 @@ bot = telegram.Bot(token=worten_config.TOKEN)
 
 
 async def main():
-    global firstIteration, old_list, new_list
+    global firstIteration
     while True:
         program_starts = time.time()
         print(f'Running worten.pt... ({datetime.datetime.now()})')
         for query in queries:
             await queryWebsite(query)
-        print(f'last product -> {old_list[len(old_list) - 1]} -> {time.time() - program_starts} seconds')
+        print(f'{len(sku_list)} products | {time.time() - program_starts} seconds')
         async with bot:
             await bot.send_message(chat_id=worten_config.status_channel_id,
-                                   text=f'Last worten product -> {old_list[len(old_list) - 1]}',
+                                   text=f'Last worten product now',
                                    disable_notification=True)
         firstIteration = False
 
-        removed = set(old_list).difference(set(new_list))
-        if len(removed):
-            print(f'\033[91m{removed}\033[0m')
+        # remove deleted products
+        handleRemovedProducts()
 
-        print(old_list)
-        print(new_list)
-
-        old_list = new_list
-        new_list = []
         time.sleep(15)
 
+
+def handleRemovedProducts():
+    global sku_list
+
+    removed = []
+
+    for key, value in list(sku_list.items()):
+        if value is False:
+            sku_list.pop(key)
+            removed.append(key)
+        else:
+            sku_list[key] = False
+
+    if(removed):
+        print(f'\033[91m{removed}\033[0m')
 
 if __name__ == '__main__':
     asyncio.run(main())
