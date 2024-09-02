@@ -7,8 +7,8 @@ import worten_config
 import datetime
 
 queries = ['iphone', 'macbook', 'apple', 'samsung', 'tablet', 'consola', 'portatil', 'huawei', 'smartphone', 'drone',
-           'projetor', 'imac', 'ipad', 'tv', 'exaustor', 'powerbank', 'belkin', 'monitor', 'sanduicheira',
-           'sandwicheira']
+           'projetor', 'imac', 'ipad', 'tv', 'exaustor', 'powerbank', 'belkin', 'sanduicheira',
+           'sandwicheira', 'monitor']
 
 bannedList = ['suport tv ', 'suporte de tv ', 'toner ', 'triciclo ', 'bebé ', 'berço ', 'cama ', 'carrinho ',
               'aquecedor ', 'capa ', 'cabo ', 'case ', 'seguro ', 'película ', 'substituição ', 'tinteiros ',
@@ -41,8 +41,7 @@ async def handleItem(item):
             skip = True
 
     if productID not in sku_list and not skip and int(productQuantity) < 5:
-        if sendMessage and firstIteration is False:
-
+        if firstIteration is False:
             productImage = item['product']['image']['url']
             productGrade = item['product']['textProperties'].get('grade-recon', {})
 
@@ -70,30 +69,36 @@ async def handleItem(item):
                        f'{url}')
 
             print(f'\033[92m{productID} | {formatedProductFinalPrice}€ | {productName}\033[0m')
-            try:
-                async with bot:
-                    await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-            except BadRequest as e:
-                async with bot:
-                    await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-            except RetryAfter as e:
-                time.sleep(e.retry_after)
-                async with bot:
-                    await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-            except TimedOut as e:
-                time.sleep(60)
-                async with bot:
-                    await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-            except NetworkError as e:
-                time.sleep(30)
-                async with bot:
-                    await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
-            except Exception as e:
-                time.sleep(1)
-                async with bot:
-                    await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
 
-    sku_list[productID] = True
+            if sendMessage:
+                try:
+                    async with bot:
+                        await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                except BadRequest as e:
+                    async with bot:
+                        await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                except RetryAfter as e:
+                    time.sleep(e.retry_after)
+                    async with bot:
+                        await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                except TimedOut as e:
+                    time.sleep(60)
+                    async with bot:
+                        await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                except NetworkError as e:
+                    time.sleep(30)
+                    async with bot:
+                        await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+                except Exception as e:
+                    time.sleep(1)
+                    async with bot:
+                        await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
+
+    sku_list[productID] = {
+        'state': True,
+        'time': datetime.datetime.now()
+    }
+
 
 async def queryWebsite(query):
     page = 0
@@ -154,7 +159,8 @@ async def queryWebsite(query):
                     hasNextPage = searchProducts.get('hasNextPage', False)
                     totalHits = searchProducts.get('totalHits', 0)
                     if int(totalHits) > 1000:
-                        break
+                        queries.remove(query)
+                        return
                     data = searchProducts.get('hits', [])
                     if data:
                         for item in data:
@@ -177,15 +183,17 @@ async def main():
         print(f'Running worten.pt... ({datetime.datetime.now()})')
         for query in queries:
             await queryWebsite(query)
+
+        firstIteration = False
+
+        # remove deleted products
+        handleRemovedProducts()
+
         print(f'{len(sku_list)} products | {time.time() - program_starts} seconds')
         async with bot:
             await bot.send_message(chat_id=worten_config.status_channel_id,
                                    text=f'Last worten product now',
                                    disable_notification=True)
-        firstIteration = False
-
-        # remove deleted products
-        handleRemovedProducts()
 
         time.sleep(15)
 
@@ -196,14 +204,22 @@ def handleRemovedProducts():
     removed = []
 
     for key, value in list(sku_list.items()):
-        if value is False:
-            sku_list.pop(key)
-            removed.append(key)
+        if value['state'] is False:
+
+            time_difference = (datetime.datetime.now() - value['time']).total_seconds()
+
+            # 5 minutes ago
+            if time_difference > 300:
+                sku_list.pop(key)
+                removed.append(key)
         else:
-            sku_list[key] = False
+            sku_list[key] = {
+                'state': False,
+                'time': datetime.datetime.now()
+            }
 
     if removed:
-        print(f'\033[91m{removed}\033[0m')
+        print(f'\033[91mProducts removed more than 5 minutes ago: {removed}\033[0m')
 
 
 if __name__ == '__main__':
