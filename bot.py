@@ -7,7 +7,9 @@ import worten_config
 import datetime
 
 queries = ['iphone', 'macbook', 'apple', 'samsung', 'tablet', 'consola', 'portatil', 'huawei', 'smartphone', 'drone',
-           'projetor', 'imac', 'ipad', 'tv', 'exaustor', 'powerbank', 'belkin', 'monitor', 'sanduicheira', 'sandwicheira']
+           'projetor', 'imac', 'ipad', 'tv', 'exaustor', 'powerbank', 'belkin', 'monitor', 'sanduicheira',
+           'sandwicheira']
+
 bannedList = ['suport tv ', 'suporte de tv ', 'toner ', 'triciclo ', 'bebé ', 'berço ', 'cama ', 'carrinho ',
               'aquecedor ', 'capa ', 'cabo ', 'case ', 'seguro ', 'película ', 'substituição ', 'tinteiros ',
               'protector de ecrã', 'protetor de ecrã']
@@ -37,8 +39,6 @@ async def handleItem(item):
     for word in bannedList:
         if word in productName.lower():
             skip = True
-
-    sku_list[productID] = True
 
     if productID not in sku_list and not skip and int(productQuantity) < 5:
         if sendMessage and firstIteration is False:
@@ -93,6 +93,7 @@ async def handleItem(item):
                 async with bot:
                     await bot.send_photo(chat_id=channel_id, photo=productImage, caption=message)
 
+    sku_list[productID] = True
 
 async def queryWebsite(query):
     page = 0
@@ -201,8 +202,9 @@ def handleRemovedProducts():
         else:
             sku_list[key] = False
 
-    if(removed):
+    if removed:
         print(f'\033[91m{removed}\033[0m')
+
 
 if __name__ == '__main__':
     asyncio.run(main())
